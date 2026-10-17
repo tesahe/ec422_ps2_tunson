@@ -150,3 +150,4 @@ unemp |>
 # I plotted a specific spike of unemployment rates in March 2020 following the beginning of the
 # COVID-19 pandemic. Compared to the national average in pink, the rates of New York and California
 # were much higher than Oregon and Texas, possibly due to having more densly populated urban areas.
+

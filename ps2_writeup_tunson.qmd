@@ -1,0 +1,134 @@
+---
+title: "Problem Set 2"
+author: "Tesahe Tunson"
+date: 10/16/2026
+format:
+  html:
+    toc: true
+    embed-resources: true
+---
+
+https://github.com/tesahe/ec422_ps2_tunson
+
+## Data
+
+The dataset is monthly, seasonally adjusted unemployment rates for the United States as a whole and California, New York, Oregon, and Texas. The data comes from FRED database retrieved through tidyquant, from the years 1976 to 2026.
+
+```{r}
+#| message: false
+#| warning: false
+library(tidyquant)
+library(tidyverse)
+library(knitr)
+
+unemp_raw <- read_rds("data/unemp_raw.rds")
+
+head(unemp_raw)
+```
+
+## Wrangling
+
+I renamed price to unemployment_rate, added readable region labels, filled the missing October 2025 value (government shutdown) with September 2025's value, and computed the month-over-month change in percentage points.
+
+```{r}
+unemp <- unemp_raw |>
+  rename(unemployment_rate = price) |>
+  mutate(region = case_when(
+    symbol == "UNRATE" ~ "United States",
+    symbol == "ORUR"   ~ "Oregon",
+    symbol == "CAUR"   ~ "California",
+    symbol == "TXUR"   ~ "Texas",
+    symbol == "NYUR"   ~ "New York"
+  ))
+
+unemp <- unemp |>
+  arrange(region, date) |>
+  group_by(region) |>
+  mutate(
+    unemployment_rate = replace(
+      unemployment_rate,
+      date == as.Date("2025-10-01"),
+      unemployment_rate[date == as.Date("2025-09-01")]
+    )
+  ) |>
+  ungroup()
+
+unemp <- unemp |>
+  arrange(region, date) |>
+  group_by(region) |>
+  mutate(unemployment_rate_change = unemployment_rate - lag(unemployment_rate)) |>
+  ungroup()
+
+unemp_recent <- unemp |>
+  filter(date >= as.Date("2015-01-01"))
+```
+
+### Summary statistics, full sample (1976–present)
+
+This table reports the mean, median and max unemployment rates for each region over the full sample. California has the highest average (7.07%), and Texas has the lowest (5.85%). The U.S. average is 6.05%. The maximum for all regions are occur in April 2020 due to COVID-19.
+
+```{r}
+unemp_summary <- unemp |>
+  group_by(region) |>
+  summarize(
+    mean_rate = mean(unemployment_rate, na.rm = TRUE),
+    min_rate  = min(unemployment_rate,  na.rm = TRUE),
+    max_rate  = max(unemployment_rate,  na.rm = TRUE)
+  )
+
+kable(unemp_summary, digits = 2,
+      col.names = c("Region", "Mean (%)", "Min (%)", "Max (%)"),
+      caption = "Unemployment rate summary statistics, 1976–present")
+```
+
+### Summary statistics, 2015–present
+
+This table shows unemployment statistics only from 2015 to present, restricting the sample size to only 11 years. Average unemployment is lower across the board compared to the full sample. This is probably due to some high unemployment times being excluded, specifically recessions in the 1980s, 1990s, and late 2000s.
+
+```{r}
+unemp_recent_summary <- unemp_recent |>
+  group_by(region) |>
+  summarize(
+    mean_rate = mean(unemployment_rate, na.rm = TRUE),
+    min_rate  = min(unemployment_rate,  na.rm = TRUE),
+    max_rate  = max(unemployment_rate,  na.rm = TRUE)
+  )
+
+kable(unemp_recent_summary, digits = 2,
+      col.names = c("Region", "Mean (%)", "Min (%)", "Max (%)"),
+      caption = "Unemployment rate summary statistics, 2015–present")
+```
+
+### Largest monthly increases and decreases, excluding 2020
+
+The COVID-19 monthly increase is excluded from this table as its far larger from any other period due to the external influence of the worldwide shutdown. Changes are measured in percentage points.
+
+The largest increases are always around a recession, specifically in 2008, 2009, and 1980. The single largest increase is in Texas in 2009 (+1.1 points).
+
+```{r}
+unemp_no_covid <- unemp |>
+  filter(year(date) != 2020)
+
+unemp_top_increases_no_covid <- unemp_no_covid |>
+  slice_max(order_by = unemployment_rate_change, n = 5)
+
+unemp_top_decreases_no_covid <- unemp_no_covid |>
+  slice_min(order_by = unemployment_rate_change, n = 5)
+
+kable(unemp_top_increases_no_covid |>
+        select(region, date, unemployment_rate, unemployment_rate_change),
+      digits = 2,
+      col.names = c("Region", "Month", "Rate (%)", "Change (pp)"),
+      caption = "Five largest month-over-month increases, excluding 2020")
+```
+
+The largest decreases usually happen during recoveries from recession. A significant year was 2021 as everything bounced back from the pandemic. The single largest increase is in the average U.S. in July 1983 (-0.7 points). Both of these come directly after a recession.
+
+```{r}
+kable(unemp_top_decreases_no_covid |>
+        select(region, date, unemployment_rate, unemployment_rate_change),
+      digits = 2,
+      col.names = c("Region", "Month", "Rate (%)", "Change (pp)"),
+      caption = "Five largest month-over-month decreases, excluding 2020")
+```
+
