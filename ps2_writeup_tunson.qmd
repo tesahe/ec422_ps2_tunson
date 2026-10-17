@@ -132,3 +132,76 @@ kable(unemp_top_decreases_no_covid |>
       caption = "Five largest month-over-month decreases, excluding 2020")
 ```
 
+## Visualization
+
+### Unemployment rates over time
+
+This plot shows the monthly unemployment rate for all regions from 1976 to 2026. They are usually correlated, rising and falling together during recessions and recoveries. The COVID-19 spike is by far the largest increase in the sample. However, Texas had it's own spike in the mid 1980s possibly due to oil prices. 
+
+```{r}
+ggplot(unemp, aes(x = date, y = unemployment_rate, color = region)) +
+  geom_line() +
+  labs(
+    title = "Monthly Unemployment Rate, 1976–Present",
+    x = "Date",
+    y = "Unemployment rate (%, seasonally adjusted)",
+    color = "Region"
+  ) +
+  theme_minimal()
+```
+
+### Unemployment rates by region
+
+This plot shows the same thing as above but with each region's history separate. California and Oregon have larger individual swings compared to the U.S. as an average, and California had the highest spikes out of all regions. 
+
+```{r}
+ggplot(unemp, aes(x = date, y = unemployment_rate, color = region)) +
+  geom_line() +
+  facet_wrap(~ region) +
+  labs(
+    title = "Monthly Unemployment Rate by Region, 1976–Present",
+    x = "Date",
+    y = "Unemployment rate (%, seasonally adjusted)"
+  ) +
+  theme_minimal() +
+  theme(legend.position = "none")
+```
+
+### Average unemployment rate by region
+
+This chart shows each region's average unemployment rate in total from 1976 to 2026. Texas has the lowest average and California has the highest. 
+
+```{r}
+ggplot(unemp_summary, aes(x = fct_reorder(region, mean_rate), y = mean_rate)) +
+  geom_col(fill = "steelblue") +
+  labs(
+    title = "Average Unemployment Rate by Region, 1976–Present",
+    x = "Region",
+    y = "Mean unemployment rate (%)"
+  ) +
+  theme_minimal()
+```
+
+### My choice: the COVID-19 shock
+
+I chose a specific sample from the years 2019 to 2022 to analyze the largest spike during COVID-19. Unemployment jumped with New York (16.7%) and California (16.1%) being the highest. Texas and Oregon had smaller spikes and recovered faster, while California and New York took longer. I think this is either because of having more urban areas representing a lot of the labor force that were hit harder by the economy, or it's because those areas have people living in closer proximity and had to react stronger to the virus.
+
+```{r}
+unemp |>
+  filter(date >= as.Date("2019-01-01"), date <= as.Date("2022-12-01")) |>
+  ggplot(aes(x = date, y = unemployment_rate, color = region)) +
+  geom_line(linewidth = 1) +
+  geom_vline(xintercept = as.Date("2020-03-01"), linetype = "dashed") +
+  labs(
+    title = "Unemployment Rates Through the COVID-19 Shock, 2019–2022",
+    subtitle = "Dashed line marks March 2020 (start of pandemic shutdowns)",
+    x = "Date",
+    y = "Unemployment rate (%, seasonally adjusted)",
+    color = "Region"
+  ) +
+  theme_minimal()
+```
+
+## Reflection
+
+The use of libraries was pretty straightforward, especially with the use of AI to explain new functions instead of looking through that library's website. I only got tripped up when using R to render the graphs and using the right formatting to get it on Quarto rather than the functionality of the code. That is also what I feel much more comfortable with after this assignment, formatting my code correctly with a final document in mind. I am comfortable with coding but don't use RStudio that much compared to other IDEs, but I feel more comfortable with the general interface and using the terminal inside RStudio now as well. 
