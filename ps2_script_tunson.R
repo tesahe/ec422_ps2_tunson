@@ -92,3 +92,61 @@ unemp_top_decreases_no_covid <- unemp_no_covid |>
   slice_min(order_by = unemployment_rate_change, n = 5)
 
 unemp_top_decreases_no_covid
+
+unemp_no_covid |> filter(year(date) == 2020)
+
+#Part 5
+# 5.1 
+
+ggplot(unemp, aes(x = date, y = unemployment_rate, color = region)) +
+  geom_line() +
+  labs(
+    title = "Monthly Unemployment Rate, 1976-Present", 
+    x = "Date", 
+    y = "Unemployment rate (%, seasonally adjusted)",
+    color = "Region"
+  ) +
+  theme_minimal()
+
+# 5.2
+
+ggplot(unemp, aes(x = date, y = unemployment_rate, color = region)) +
+  geom_line() +
+  facet_wrap(~ region) +
+  labs(
+    title = "Monthly Unemployment Rate by Region, 1976-Present",
+    x = "Date",
+    y = "Unemployment rate (%, seasonally adjusted)"
+  ) +
+  theme_minimal() +
+  theme(legend.position = "none")
+
+# 5.3
+
+ggplot(unemp_summary, aes(x = fct_reorder(region, mean_rate), y = mean_rate)) +
+  geom_col(fill = "blue") +
+  labs(
+    title = "Average Unemployment Rate by Region, 1976-Present",
+    x = "Region",
+    y = "Mean unemployment rate (%)"
+  ) +
+  theme_minimal()
+
+# 5.4
+unemp |>
+  filter(date >= as.Date("2019-01-01"), date <= as.Date("2022-12-01")) |>
+  ggplot(aes(x = date, y = unemployment_rate, color = region)) +
+  geom_line(linewidth = 1) +
+  geom_vline(xintercept = as.Date("2020-03-01"), linetype = "dashed") +
+  labs(
+    title = "Unemployment Rates Through the COVID-19 Shock, 2019–2022",
+    subtitle = "Dashed line marks March 2020 (start of pandemic shutdowns)",
+    x = "Date",
+    y = "Unemployment rate (%, seasonally adjusted)",
+    color = "Region"
+  ) +
+  theme_minimal()
+
+# I plotted a specific spike of unemployment rates in March 2020 following the beginning of the
+# COVID-19 pandemic. Compared to the national average in pink, the rates of New York and California
+# were much higher than Oregon and Texas, possibly due to having more densly populated urban areas.
